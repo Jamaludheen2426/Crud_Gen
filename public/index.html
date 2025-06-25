@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .output-section {
+            background: #f8fafc;
+            padding: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .output-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .code-output {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #059669;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                margin: 0 10px;
+            }
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+            margin-bottom: 20px;
+        }
+
+        .highlight strong {
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CRUD Generator</h1>
+            <p>Generate Controller, Service & Routes from your Sequelize models</p>
+        </div>
+
+        <div class="form-section">
+            <div class="highlight">
+                <strong>Instructions:</strong> Paste your Sequelize model definition below and click generate to create CRUD operations.
+            </div>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label for="modelName">Model Name (e.g., Banner, User, Product)</label>
+                    <input type="text" id="modelName" placeholder="Enter model name" value="Banner">
+                </div>
+
+                <div class="form-group">
+                    <label for="primaryKey">Primary Key Field</label>
+                    <input type="text" id="primaryKey" placeholder="e.g., BannerId, UserId" value="BannerId">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="modelCode">Sequelize Model Code</label>
+                <textarea id="modelCode" placeholder="Paste your Sequelize model definition here...">const DataTypes = require("sequelize");
+const sequelize = require('../config/db.config');
+
+module.exports = (sequelize, Sequelize) => {
+    const banner = sequelize.define('Banner', {
+        BannerId: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        BannerImgurl: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        BannerTitle: {
+            type: DataTypes.STRING(100),
+            allowNull: false,
+        },
+        Active: {
+            type: DataTypes.STRING(1),
+            defaultValue: "T",
+            allowNull: false,
+        },
+        Deleted: {
+            type: DataTypes.STRING(1),
+            defaultValue: "F",
+            allowNull: false,
+        },
+        CreatedBy: {
+            type: DataTypes.INTEGER
+        },
+        UpdatedBy: {
+            type: DataTypes.INTEGER,
+        },
+        CreatedDate: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        UpdatedDate: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+    }, {
+        tableName: 'Banner',
+        timestamps: false,
+    });
+    return banner;
+};</textarea>
+            </div>
+
+            <button class="btn" onclick="generateCRUD()">Generate CRUD Operations</button>
+        </div>
+
+        <div class="output-section" id="outputSection" style="display: none;">
+            <div class="output-tabs">
+                <button class="tab active" onclick="showTab('controller')">Controller</button>
+                <button class="tab" onclick="showTab('service')">Service</button>
+                <button class="tab" onclick="showTab('routes')">Routes</button>
+                <button class="tab" onclick="showTab('swaggerRoutes')">Swagger Routes</button>
+            </div>
+
+            <div id="controller" class="tab-content active">
+                <pre class="code-output" id="controllerCode"></pre>
+                <button class="copy-btn" onclick="copyToClipboard('controllerCode')">Copy Controller</button>
+            </div>
+
+            <div id="service" class="tab-content">
+                <pre class="code-output" id="serviceCode"></pre>
+                <button class="copy-btn" onclick="copyToClipboard('serviceCode')">Copy Service</button>
+            </div>
+
+            <div id="routes" class="tab-content">
+                <pre class="code-output" id="routesCode"></pre>
+                <button class="copy-btn" onclick="copyToClipboard('routesCode')">Copy Routes</button>
+            </div>
+
+            <div id="swaggerRoutes" class="tab-content">
+                <pre class="code-output" id="swaggerRoutesCode"></pre>
+                <button class="copy-btn" onclick="copyToClipboard('swaggerRoutesCode')">Copy Swagger Routes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateCRUD() {
+            const modelName = document.getElementById('modelName').value.trim();
+            const primaryKey = document.getElementById('primaryKey').value.trim();
+            const modelCode = document.getElementById('modelCode').value.trim();
+
+            if (!modelName || !primaryKey || !modelCode) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Extract required fields from model
+            const requiredFields = extractRequiredFields(modelCode);
+            
+            // Generate code
+            const controllerCode = generateController(modelName, primaryKey, requiredFields);
+            const serviceCode = generateService(modelName, primaryKey);
+            const routesCode = generateRoutesPlain(modelName); // plain routes
+            const swaggerRoutesCode = generateRoutes(modelName); // swagger-annotated routes
+
+            // Display results
+            document.getElementById('controllerCode').textContent = controllerCode;
+            document.getElementById('serviceCode').textContent = serviceCode;
+            document.getElementById('routesCode').textContent = routesCode;
+            document.getElementById('swaggerRoutesCode').textContent = swaggerRoutesCode;
+            document.getElementById('outputSection').style.display = 'block';
+        }
+
+        function extractRequiredFields(modelCode) {
+            const fields = [];
+            const lines = modelCode.split('\n');
+            let currentField = '';
+            let isFieldDefinition = false;
+
+            for (let line of lines) {
+                line = line.trim();
+                
+                // Check for field definition
+                if (line.includes(':') && line.includes('{') && !line.includes('sequelize.define')) {
+                    currentField = line.split(':')[0].trim();
+                    isFieldDefinition = true;
+                }
+                
+                // Check if field is required (allowNull: false)
+                if (isFieldDefinition && line.includes('allowNull: false')) {
+                    if (currentField && !currentField.includes('Id') && 
+                        !['Active', 'Deleted', 'CreatedBy', 'UpdatedBy', 'CreatedDate', 'UpdatedDate'].includes(currentField)) {
+                        fields.push(currentField);
+                    }
+                }
+                
+                // End of field definition
+                if (line.includes('},') || line === '}') {
+                    isFieldDefinition = false;
+                    currentField = '';
+                }
+            }
+            
+            return fields;
+        }
+
+        function generateController(modelName, primaryKey, requiredFields) {
+            const serviceName = `${modelName}Service`;
+            const modelNameLower = modelName.toLowerCase();
+            const modelNamePlural = modelName.toLowerCase() + 's';
+
+            const requiredFieldsValidation = requiredFields.map(field => {
+                const fieldLower = field.toLowerCase().replace(modelName.toLowerCase(), '');
+                return `        if (!${fieldLower}) {
+            logger.warn('${field} is missing in request body');
+            return res.status(400).json({
+                status: 'error',
+                code: 'MISSING_REQUIRED_FIELDS',
+                message: '${field} is required'
+            });
+        }`;
+            }).join('\n\n');
+
+            const fieldMapping = requiredFields.map(field => {
+                const fieldLower = field.toLowerCase().replace(modelName.toLowerCase(), '');
+                return `            ${field}: ${fieldLower},`;
+            }).join('\n');
+
+            return `const ${serviceName} = require('../service/${modelNameLower}.service');
+const errorResponse = require('../response/error.response');
+const { logger } = require("../logger/log");
+
+const getAll${modelName}s = async (req, res) => {
+    try {
+        logger.info('Fetching all ${modelNamePlural}...');
+        const ${modelNamePlural} = await ${serviceName}.getAll${modelName}s();
+        
+        if (!${modelNamePlural} || ${modelNamePlural}.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}S_NOT_FOUND',
+                message: 'No ${modelNamePlural} found.'
+            });
+        }
+        
+        res.status(200).json({
+            status: 'success',
+            data: ${modelNamePlural},
+            count: ${modelNamePlural}.length
+        });
+        logger.info('${modelName}s fetched successfully', {
+            count: ${modelNamePlural}.length
+        });
+    } catch (error) {
+        logger.error('Error fetching ${modelNamePlural}:', error);
+
+        if (error.code === 'DATABASE_ERROR') {
+            return res.status(500).json(errorResponse.internalErrorResponse);
+        }
+        
+        res.status(500).json(errorResponse.internalErrorResponse);
+    }
+};
+
+const create${modelName} = async (req, res) => {
+    try {
+        if (!req.body || Object.keys(req.body).length === 0) {
+            logger.warn('Request body is empty or missing');
+            return res.status(400).json({
+                status: 'error',
+                message: 'Request body is required'
+            });
+        }
+        
+        const { ${requiredFields.map(field => field.toLowerCase().replace(modelName.toLowerCase(), '')).join(', ')} } = req.body;
+        
+${requiredFieldsValidation}
+        
+        const ${modelNameLower}Data = {
+${fieldMapping}
+            Active: 'T',
+            Deleted: 'F'
+        };
+        
+        const new${modelName} = await ${serviceName}.create${modelName}(${modelNameLower}Data);
+        
+        res.status(201).json({
+            status: 'success',
+            message: '${modelName} created successfully',
+            data: new${modelName}
+        });
+        logger.info('${modelName} created successfully:', new${modelName});
+    } catch (error) {
+        logger.error('Error creating ${modelNameLower}:', error);
+
+        if (error.code === 'DUPLICATE_${modelName.toUpperCase()}') {
+            return res.status(409).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}_ALREADY_EXISTS',
+                message: '${modelName} already exists.'
+            });
+        }
+        
+        if (error.code === 'VALIDATION_ERROR') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid parameters'
+            });
+        }
+        
+        res.status(500).json({
+            status: 'error',
+            message: 'Internal server error'
+        });
+    }
+};
+
+const update${modelName} = async (req, res) => {
+    try {
+        const ${modelNameLower}Id = req.params.id;
+        if (!${modelNameLower}Id) {
+            logger.warn('${modelName} ID is missing in request parameters');
+            return res.status(400).json(errorResponse.paramNotFoundResponse);
+        }
+        
+        if (!req.body || Object.keys(req.body).length === 0) {
+            logger.warn('Request body is empty or missing');
+            return res.status(400).json(errorResponse.requestBodyNotFoundResponse);
+        }
+        
+        const { ${requiredFields.map(field => field.toLowerCase().replace(modelName.toLowerCase(), '')).join(', ')}, isActive } = req.body;
+        const ${modelNameLower}Data = {};
+        
+${requiredFields.map(field => {
+    const fieldLower = field.toLowerCase().replace(modelName.toLowerCase(), '');
+    return `        if (${fieldLower}) {
+            ${modelNameLower}Data.${field} = ${fieldLower};
+        }`;
+}).join('\n\n')}
+        
+        if (isActive !== undefined && isActive !== null) {
+            logger.info('Setting ${modelNameLower} active status:', isActive);
+            ${modelNameLower}Data.Active = (isActive === 'true' || isActive === true) ? 'T' : 'F';
+        }
+        
+        if (Object.keys(${modelNameLower}Data).length === 0) {
+            logger.warn('No valid data provided for update');
+            return res.status(400).json({
+                status: 'error',
+                code: 'NO_DATA_TO_UPDATE',
+                message: 'No valid data provided for update.'
+            });
+        }
+        
+        const updated${modelName} = await ${serviceName}.update${modelName}(${modelNameLower}Id, ${modelNameLower}Data);
+        
+        if (!updated${modelName}) {
+            logger.warn('${modelName} not found with ID:', ${modelNameLower}Id);
+            return res.status(404).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}_NOT_FOUND',
+                message: '${modelName} not found with the provided ID.'
+            });
+        }
+        
+        res.status(200).json({
+            status: 'success',
+            message: '${modelName} updated successfully',
+            data: updated${modelName}
+        });
+        logger.info('${modelName} updated successfully:', updated${modelName});
+    } catch (error) {
+        logger.error('Error updating ${modelNameLower}:', error);
+        
+        if (error.code === '${modelName.toUpperCase()}_NOT_FOUND') {
+            return res.status(404).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}_NOT_FOUND',
+                message: '${modelName} not found with the provided ID.'
+            });
+        }
+        
+        if (error.code === 'VALIDATION_ERROR') {
+            return res.status(400).json(errorResponse.paramInvalidResponse);
+        }
+        
+        res.status(500).json(errorResponse.internalErrorResponse);
+    }
+};
+
+const delete${modelName} = async (req, res) => {
+    try {
+        const ${modelNameLower}Id = req.params.id;
+        if (!${modelNameLower}Id) {
+            logger.warn('${modelName} ID is missing in request parameters');
+            return res.status(400).json(errorResponse.paramNotFoundResponse);
+        }
+        
+        const deleted${modelName} = await ${serviceName}.delete${modelName}(${modelNameLower}Id);
+        
+        if (!deleted${modelName}) {
+            logger.warn('${modelName} not found with ID:', ${modelNameLower}Id);
+            return res.status(404).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}_NOT_FOUND',
+                message: '${modelName} not found with the provided ID.'
+            });
+        }
+        
+        res.status(200).json({
+            status: 'success',
+            message: '${modelName} deleted successfully'
+        });
+        logger.info('${modelName} deleted successfully with ID:', ${modelNameLower}Id);
+    } catch (error) {
+        logger.error('Error deleting ${modelNameLower}:', error);
+        
+        if (error.code === '${modelName.toUpperCase()}_NOT_FOUND') {
+            return res.status(404).json({
+                status: 'error',
+                code: '${modelName.toUpperCase()}_NOT_FOUND',
+                message: '${modelName} not found with the provided ID.'
+            });
+        }
+        
+        res.status(500).json(errorResponse.internalErrorResponse);
+    }
+};
+
+module.exports = {
+    getAll${modelName}s,
+    create${modelName},
+    update${modelName},
+    delete${modelName}
+};`;
+        }
+
+        function generateService(modelName, primaryKey) {
+            const modelNameLower = modelName.toLowerCase();
+            const modelNamePlural = modelName.toLowerCase() + 's';
+
+            return `const { where } = require('sequelize');
+const db = require('../config/db.config');
+const ${modelName} = db.${modelNameLower};
+const { logger } = require("../logger/log");
+
+const create${modelName} = async (${modelNameLower}Data) => {
+    try {
+        const ${modelNameLower} = await ${modelName}.create(${modelNameLower}Data);
+        logger.info('${modelName} created successfully:', ${modelNameLower});
+        if (!${modelNameLower}) {
+            throw new Error('${modelName} creation failed');
+        }
+        return ${modelNameLower};
+    } catch (error) {
+        throw error;
+    }
+};
+
+const getAll${modelName}s = async () => {
+    try {
+        logger.info("Fetching all ${modelNamePlural} from the database...");
+        const ${modelNamePlural} = await ${modelName}.findAll({
+            where: {
+                Deleted: 'F',
+                Active: 'T'
+            }
+        });
+        return ${modelNamePlural};
+    } catch (error) {
+        throw error;
+    }
+};
+
+const update${modelName} = async (id, ${modelNameLower}Data) => {
+    try {
+        logger.info(\`Updating ${modelNameLower} with ID: \${id}\`);
+        const [updated] = await ${modelName}.update(${modelNameLower}Data, {
+            where: { ${primaryKey}: id }
+        });
+        
+        if (updated === 0) {
+            throw new Error('${modelName} not found or no changes made');
+        }
+
+        const updated${modelName} = await ${modelName}.findByPk(id);
+        return updated${modelName};
+    } catch (error) {
+        throw error;
+    }
+};
+
+const delete${modelName} = async (id) => {
+    try {
+        logger.info(\`Deleting ${modelNameLower} with ID: \${id}\`);
+        const [updated] = await ${modelName}.update(
+            { Deleted: 'T' },
+            { where: { ${primaryKey}: id } }
+        );
+        
+        if (updated === 0) {
+            throw new Error('${modelName} not found');
+        }
+        
+        return true;
+    } catch (error) {
+        throw error;
+    }
+};
+
+module.exports = {
+    create${modelName},
+    getAll${modelName}s,
+    update${modelName},
+    delete${modelName}
+};`;
+        }
+
+        function generateRoutes(modelName) {
+            const modelNameLower = modelName.toLowerCase();
+            const controllerName = `${modelName}Controller`;
+
+            return `const express = require('express');
+const router = express.Router();
+const ${controllerName} = require('../controller/${modelNameLower}.controller');
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ${modelName}:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the ${modelNameLower}
+ *         status:
+ *           type: string
+ *           description: Response status
+ *         message:
+ *           type: string
+ *           description: Response message
+ *         data:
+ *           type: object
+ *           description: ${modelName} data
+ */
+
+/**
+ * @swagger
+ * /api/${modelNameLower}s:
+ *   get:
+ *     summary: Get all ${modelNameLower}s
+ *     tags: [${modelName}s]
+ *     responses:
+ *       200:
+ *         description: List of all ${modelNameLower}s
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/${modelName}'
+ *                 count:
+ *                   type: integer
+ *       404:
+ *         description: No ${modelNameLower}s found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/', ${controllerName}.getAll${modelName}s);
+
+/**
+ * @swagger
+ * /api/${modelNameLower}s:
+ *   post:
+ *     summary: Create a new ${modelNameLower}
+ *     tags: [${modelName}s]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: The ${modelNameLower} title
+ *     responses:
+ *       201:
+ *         description: ${modelName} created successfully
+ *       400:
+ *         description: Bad request - missing required fields
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/', ${controllerName}.create${modelName});
+
+/**
+ * @swagger
+ * /api/${modelNameLower}s/{id}:
+ *   put:
+ *     summary: Update a ${modelNameLower}
+ *     tags: [${modelName}s]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ${modelNameLower} id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: ${modelName} updated successfully
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       404:
+ *         description: ${modelName} not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/:id', ${controllerName}.update${modelName});
+
+/**
+ * @swagger
+ * /api/${modelNameLower}s/{id}:
+ *   delete:
+ *     summary: Delete a ${modelNameLower}
+ *     tags: [${modelName}s]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ${modelNameLower} id
+ *     responses:
+ *       200:
+ *         description: ${modelName} deleted successfully
+ *       404:
+ *         description: ${modelName} not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/:id', ${controllerName}.delete${modelName});
+
+module.exports = router;`;
+        }
+
+        function generateRoutesPlain(modelName) {
+            const modelNameLower = modelName.toLowerCase();
+            const controllerName = `${modelName}Controller`;
+            return `const express = require('express');\nconst router = express.Router();\nconst ${controllerName} = require('../controller/${modelNameLower}.controller');\n\n// GET all ${modelNameLower}s\nrouter.get('/', ${controllerName}.getAll${modelName}s);\n\n// POST create ${modelNameLower}\nrouter.post('/', ${controllerName}.create${modelName});\n\n// PUT update ${modelNameLower}\nrouter.put('/:id', ${controllerName}.update${modelName});\n\n// DELETE ${modelNameLower}\nrouter.delete('/:id', ${controllerName}.delete${modelName});\n\nmodule.exports = router;`;
+        }
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#10b981';
+                }, 2000);
+            });
+        }
+
+        // Optionally, you can auto-generate on page load by uncommenting below:
+        // window.onload = function() {
+        //     generateCRUD();
+        // };
+    </script>
+</body>
+</html>
