@@ -1,4 +1,4 @@
-// CRUD Generation Utility Functions - Properly Fixed
+// CRUD Generation Utility Functions - Fixed Template Literals
 // Extracted from main server for use in Vercel serverless functions
 
 // Legacy CRUD generation functions
@@ -161,7 +161,7 @@ const getAll${modelName}s = async () => {
 
 const update${modelName} = async (id, ${modelNameLower}Data) => {
     try {
-        logger.info(\`Updating ${modelNameLower} with ID: \$\{id\}\`);
+        logger.info(\`Updating ${modelNameLower} with ID: \${id}\`);
         const [updated] = await ${modelName}.update(${modelNameLower}Data, {
             where: { ${primaryKey}: id }
         });
@@ -179,7 +179,7 @@ const update${modelName} = async (id, ${modelNameLower}Data) => {
 
 const delete${modelName} = async (id) => {
     try {
-        logger.info(\`Deleting ${modelNameLower} with ID: \$\{id\}\`);
+        logger.info(\`Deleting ${modelNameLower} with ID: \${id}\`);
         const [updated] = await ${modelName}.update(
             { Deleted: 'T' },
             { where: { ${primaryKey}: id } }
@@ -202,6 +202,7 @@ module.exports = {
 function generateRoutes(modelName) {
     const modelNameLower = modelName.toLowerCase();
     const controllerName = `${modelName}Controller`;
+    const modelNamePlural = modelNameLower + 's';
 
     return `const express = require('express');
 const router = express.Router();
@@ -217,21 +218,18 @@ module.exports = router;`;
 
 // Enhanced CRUD generation functions
 function generateEnhancedModel(tableName, primaryKey, columns) {
+    const modelNameLower = tableName.toLowerCase();
     const modelNameCapitalized = tableName.charAt(0).toUpperCase() + tableName.slice(1);
     const tablePlural = tableName.charAt(0).toUpperCase() + tableName.slice(1) + 's';
 
     // Generate column definitions
     const columnDefs = columns.map(col => {
         const sequelizeType = getSequelizeType(col.type);
-        const validation = sequelizeType.includes('STRING') ? `,
-            validate: {
-                len: [1, 255]
-            }` : '';
         return `        ${col.name}: {
             type: DataTypes.${sequelizeType},
-            allowNull: ${col.nullable}${validation}
+            allowNull: ${col.nullable}${sequelizeType.includes('STRING') ? ',\\n            validate: {\\n                len: [1, 255]\\n            }' : ''}
         }`;
-    }).join(',\n');
+    }).join(',\\n');
 
     return `const DataTypes = require("sequelize");
 const sequelize = require('../config/db.config');
@@ -298,7 +296,7 @@ function generateEnhancedController(tableName, primaryKey, columns) {
                 message: '${col.name} is required'
             });
         }`)
-        .join('\n\n');
+        .join('\\n\\n');
 
     return `const ${serviceName} = require('../service/${modelNameLower}.service');
 const errorResponse = require('../response/error.response');
@@ -322,7 +320,7 @@ const getAll${modelNameCapitalized}s = async (req, res) => {
             data: ${modelNamePlural},
             count: ${modelNamePlural}.length
         });
-        logger.info(\`${modelNameCapitalized}s fetched: \$\{${modelNamePlural}.length\} found\`);
+        logger.info(\`${modelNameCapitalized}s fetched: \${${modelNamePlural}.length} found\`);
     } catch (error) {
         logger.error('Error fetching ${modelNamePlural}:', error.message);
         
@@ -356,9 +354,9 @@ const get${modelNameCapitalized}ById = async (req, res) => {
             status: 'success',
             data: ${modelNameLower}
         });
-        logger.info(\`${modelNameCapitalized} fetched: ID \$\{${modelNameLower}Id\}\`);
+        logger.info(\`${modelNameCapitalized} fetched: ID \${${modelNameLower}Id}\`);
     } catch (error) {
-        logger.error(\`Fetch error: ID \$\{req.params.id\}\`, error.message);
+        logger.error(\`Fetch error: ID \${req.params.id}\`, error.message);
         if (error.code === 'DATABASE_ERROR') {
             return res.status(500).json(errorResponse.internalErrorResponse);
         }
@@ -374,7 +372,7 @@ const create${modelNameCapitalized} = async (req, res) => {
 ${requiredFieldChecks}
 
         const ${modelNameLower}Data = {
-            ${columns.map(col => `${col.name}: ${col.name}${col.type === 'STRING' ? '.trim()' : ''}`).join(',\n            ')},
+            ${columns.map(col => `${col.name}: ${col.name}${col.type === 'STRING' ? '.trim()' : ''}`).join(',\\n            ')},
             Active,
             CreatedBy
         };
@@ -386,7 +384,7 @@ ${requiredFieldChecks}
             message: '${modelNameCapitalized} created successfully',
             data: new${modelNameCapitalized}
         });
-        logger.info(\`${modelNameCapitalized} created: ID \$\{new${modelNameCapitalized}.${primaryKey}\}\`);
+        logger.info(\`${modelNameCapitalized} created: ID \${new${modelNameCapitalized}.${primaryKey}}\`);
     } catch (error) {
         logger.error('Error creating ${modelNameLower}:', error.message);
         if (error.code === 'DATABASE_ERROR') {
@@ -422,7 +420,7 @@ const update${modelNameCapitalized} = async (req, res) => {
         const updateData = {};
         ${columns.map(col => `if (${col.name} !== undefined) {
             updateData.${col.name} = ${col.name}${col.type === 'STRING' ? '.trim()' : ''};
-        }`).join('\n        ')}
+        }`).join('\\n        ')}
         if (Active !== undefined) {
             updateData.Active = Active;
         }
@@ -435,9 +433,9 @@ const update${modelNameCapitalized} = async (req, res) => {
             message: '${modelNameCapitalized} updated successfully',
             data: updated${modelNameCapitalized}
         });
-        logger.info(\`${modelNameCapitalized} updated: ID \$\{${modelNameLower}Id\}\`);
+        logger.info(\`${modelNameCapitalized} updated: ID \${${modelNameLower}Id}\`);
     } catch (error) {
-        logger.error(\`Update error: ID \$\{req.params.id\}\`, error.message);
+        logger.error(\`Update error: ID \${req.params.id}\`, error.message);
         if (error.code === 'DATABASE_ERROR') {
             return res.status(500).json(errorResponse.internalErrorResponse);
         }
@@ -460,7 +458,7 @@ function generateEnhancedService(tableName, primaryKey, columns) {
     
     // Generate attributes list for findAll
     const allAttributes = [primaryKey, ...columns.map(col => col.name), 'Active', 'CreatedAt', 'UpdatedAt', 'CreatedBy', 'UpdatedBy', 'Deleted'];
-    const attributesList = allAttributes.map(attr => `'${attr}'`).join(',\n                ');
+    const attributesList = allAttributes.map(attr => `'${attr}'`).join(',\\n                ');
 
     return `const db = require('../config/db.config');
 const ${modelNameCapitalized} = db.${modelNameLower};
@@ -488,14 +486,14 @@ const getAll${modelNameCapitalized}s = async () => {
 
 const get${modelNameCapitalized}ById = async (id) => {
     try {
-        logger.info(\`Fetching ${modelNameLower} with ID: \$\{id\}\`);
+        logger.info(\`Fetching ${modelNameLower} with ID: \${id}\`);
         const ${modelNameLower} = await ${modelNameCapitalized}.findOne({
             where: {
                 ${primaryKey}: id,
                 Deleted: 'F'
             },
             attributes: [
-                ${attributesList.split(',\n                ').slice(0, -2).join(',\n                ')}
+                ${attributesList.split(',\\n                ').slice(0, -2).join(',\\n                ')}
             ]
         });
         return ${modelNameLower};
@@ -526,7 +524,7 @@ const create${modelNameCapitalized} = async (${modelNameLower}Data) => {
 
 const update${modelNameCapitalized} = async (${modelNameLower}Id, updateData) => {
     try {
-        logger.info(\`Updating ${modelNameLower} with ID: \$\{${modelNameLower}Id\}\`, updateData);
+        logger.info(\`Updating ${modelNameLower} with ID: \${${modelNameLower}Id}\`, updateData);
         
         updateData.UpdatedAt = new Date();
         
